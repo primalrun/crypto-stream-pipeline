@@ -4,6 +4,8 @@ Real-time cryptocurrency trade streaming: Binance WebSocket → Kafka → Spark 
 
 Companion project to [tlc-pipeline](https://github.com/primalrun/tlc-pipeline) (batch). Together they demonstrate both batch and streaming patterns on the same stack.
 
+For implementation details see [INTERNALS.md](INTERNALS.md).
+
 ---
 
 ## Architecture
