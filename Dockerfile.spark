@@ -13,9 +13,9 @@ RUN curl -fL -o $SPARK_HOME/jars/spark-sql-kafka-0-10_2.12-3.5.3.jar \
         https://repo1.maven.org/maven2/org/apache/commons/commons-pool2/2.11.1/commons-pool2-2.11.1.jar
 
 # Snowflake JARs for foreachBatch writes (format("snowflake"))
-RUN curl -fL -o $SPARK_HOME/jars/spark-snowflake_2.12-2.15.0-spark_3.5.jar \
-        https://repo1.maven.org/maven2/net/snowflake/spark-snowflake_2.12/2.15.0-spark_3.5/spark-snowflake_2.12-2.15.0-spark_3.5.jar && \
-    curl -fL -o $SPARK_HOME/jars/snowflake-jdbc-3.16.1.jar \
-        https://repo1.maven.org/maven2/net/snowflake/snowflake-jdbc/3.16.1/snowflake-jdbc-3.16.1.jar
+RUN curl -fL -o $SPARK_HOME/jars/spark-snowflake_2.12-3.1.7.jar \
+        https://repo1.maven.org/maven2/net/snowflake/spark-snowflake_2.12/3.1.7/spark-snowflake_2.12-3.1.7.jar && \
+    curl -fL -o $SPARK_HOME/jars/snowflake-jdbc-3.28.0.jar \
+        https://repo1.maven.org/maven2/net/snowflake/snowflake-jdbc/3.28.0/snowflake-jdbc-3.28.0.jar
 
 USER spark
