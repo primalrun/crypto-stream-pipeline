@@ -1,0 +1,4 @@
+snowflake_org      = "MYORG"
+snowflake_account  = "MYACCOUNT"
+snowflake_user     = "myuser"
+snowflake_password = "mypassword"

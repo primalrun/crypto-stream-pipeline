@@ -1,0 +1,20 @@
+# Secrets
+.env
+
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfvars
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Spark checkpoints (ephemeral, recreated on restart)
+/tmp/checkpoints/
+
+# macOS
+.DS_Store

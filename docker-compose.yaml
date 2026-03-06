@@ -1,0 +1,105 @@
+services:
+  # ---------------------------------------------------------------------------
+  # Kafka (KRaft mode — no Zookeeper)
+  # ---------------------------------------------------------------------------
+  kafka:
+    image: bitnami/kafka:3.7
+    ports:
+      - "9094:9094"   # external access (localhost:9094)
+    environment:
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: "controller,broker"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # One-time topic creation (exits after topic is created)
+  # ---------------------------------------------------------------------------
+  kafka-init:
+    image: bitnami/kafka:3.7
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command:
+      - /bin/bash
+      - -c
+      - |
+        kafka-topics.sh --bootstrap-server kafka:9092 \
+          --create --if-not-exists \
+          --topic ${KAFKA_TOPIC:-crypto_trades} \
+          --partitions 3 --replication-factor 1
+        echo "Topic '${KAFKA_TOPIC:-crypto_trades}' ready."
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
+  # Binance WebSocket → Kafka producer
+  # ---------------------------------------------------------------------------
+  producer:
+    build:
+      context: producer
+      dockerfile: Dockerfile
+    env_file: .env
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Spark cluster (master + worker)
+  # The streaming job is started manually via: make stream
+  # ---------------------------------------------------------------------------
+  spark-master:
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
+    command: /opt/spark/sbin/start-master.sh
+    ports:
+      - "8080:8080"   # Spark web UI
+      - "7077:7077"   # Spark master port
+    environment:
+      SPARK_MASTER_HOST: spark-master
+      SPARK_NO_DAEMONIZE: "true"
+    env_file: .env
+    volumes:
+      - ./spark/jobs:/opt/spark-jobs
+
+  spark-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
+    command: /opt/spark/sbin/start-worker.sh spark://spark-master:7077
+    environment:
+      SPARK_WORKER_CORES: "2"
+      SPARK_WORKER_MEMORY: "2g"
+      SPARK_NO_DAEMONIZE: "true"
+    env_file: .env
+    volumes:
+      - ./spark/jobs:/opt/spark-jobs
+    depends_on:
+      - spark-master
+
+  # ---------------------------------------------------------------------------
+  # Optional: Kafka UI (start with: make kafka-ui)
+  # ---------------------------------------------------------------------------
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "8085:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      - kafka
+    profiles:
+      - ui
