@@ -74,3 +74,29 @@ In this project the topic is `crypto_trades`. The producer writes every trade ev
 In this project:
 - **Producer** writes to `crypto_trades`
 - **Spark** reads from `crypto_trades` starting at `latest` (ignores historical messages, only processes new ones)
+
+---
+
+## withWatermark
+
+In streaming, data can arrive late — a trade that happened at 20:10:45 might not reach Spark until 20:13:00 due to network delays. Without guidance, Spark would have to keep every window open forever just in case late data arrives.
+
+`withWatermark("trade_time", "2 minutes")` tells Spark:
+
+> "Wait up to 2 minutes for late data. If a trade's `trade_time` is more than 2 minutes behind the latest data you've seen, drop it."
+
+This lets Spark do two things:
+
+**1. Finalize windows** — once the watermark has passed a window's end time, Spark knows no more data can arrive for it, writes the final OHLCV row to Snowflake, and discards the state. Without a watermark, Spark can never safely emit `outputMode("append")` results for aggregations.
+
+**2. Bound memory usage** — Spark keeps window state in memory. The watermark gives it a cutoff so it can evict old state rather than accumulating it indefinitely.
+
+**Concrete example:**
+
+- Latest trade seen: `20:15:30`
+- Watermark threshold: 2 minutes
+- Current watermark: `20:13:30`
+- Any trade with `trade_time < 20:13:30` is considered too late and dropped
+- The `20:12:00–20:13:00` window is now finalized and written to Snowflake
+
+The 2-minute value is a tradeoff — larger means more tolerance for late data but more memory usage and higher latency before results appear.
