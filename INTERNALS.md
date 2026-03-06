@@ -54,3 +54,23 @@ In every trade there are two sides — one placed a **limit order** that sat on 
 | `false` | The buyer was the taker — a market buy order hit a waiting limit sell | Buying pressure (aggressive buyer initiated) |
 
 It's a market microstructure signal used to gauge who is driving price action at any given moment.
+
+---
+
+## Kafka Topic
+
+A Kafka topic is a named channel where messages are published and consumed — conceptually similar to a database table or a message queue, but designed for high-throughput streaming.
+
+In this project the topic is `crypto_trades`. The producer writes every trade event to it, and Spark reads from it.
+
+**Partitions** — a topic is split into partitions for parallelism. We have 3 partitions on `crypto_trades` (one per symbol). Spark can read all 3 simultaneously.
+
+**Retention** — messages stay in the topic for a configurable period (default 7 days) regardless of whether they've been consumed. Unlike a queue, reading a message doesn't delete it.
+
+**Offsets** — each message in a partition gets a sequential number (offset). Consumers track which offset they've read up to, so they can resume exactly where they left off after a restart. This is why `make stream` can pick up from where it stopped.
+
+**Producers and consumers are decoupled** — the producer doesn't know or care who is reading. Multiple consumers could independently read the same topic at their own pace.
+
+In this project:
+- **Producer** writes to `crypto_trades`
+- **Spark** reads from `crypto_trades` starting at `latest` (ignores historical messages, only processes new ones)
