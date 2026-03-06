@@ -100,3 +100,25 @@ This lets Spark do two things:
 - The `20:12:00–20:13:00` window is now finalized and written to Snowflake
 
 The 2-minute value is a tradeoff — larger means more tolerance for late data but more memory usage and higher latency before results appear.
+
+---
+
+## outputMode("append")
+
+Spark streaming has three output modes that control which rows get emitted to the sink on each trigger:
+
+| Mode | Behavior |
+|---|---|
+| `append` | Only emit rows that are **finalized** and will never change |
+| `update` | Emit all rows that were **updated** in this trigger, including partial results |
+| `complete` | Emit the **entire result table** on every trigger |
+
+We use `outputMode("append")` on the OHLCV query because:
+
+- Combined with `withWatermark`, Spark knows exactly when a window is finalized (no more late data can arrive)
+- Once finalized, the window is emitted **exactly once** to Snowflake — no duplicates
+- Partial/incomplete windows are held in state and never written until they're final
+
+`update` mode would write a window to Snowflake every time it receives new trades, so the same window would be written multiple times with changing values as more trades arrive — problematic for an append-only table.
+
+The raw trades query (Query 1) doesn't use `outputMode` explicitly — `foreachBatch` without aggregation defaults to append, and since each trade row is immutable there's nothing to update anyway.
