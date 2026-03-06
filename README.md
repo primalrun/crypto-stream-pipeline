@@ -69,6 +69,14 @@ Spark Structured Streaming
 
 Tables are created automatically by the Spark connector on first write.
 
+**`CRYPTO.RAW.trades`**
+
+![trades table](docs/snowflake-raw-trades.png)
+
+**`CRYPTO.RAW.prices_1min`**
+
+![prices_1min table](docs/snowflake-raw-prices_1min.png)
+
 ---
 
 ## Prerequisites
