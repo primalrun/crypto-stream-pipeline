@@ -25,7 +25,7 @@ KAFKA_TOPIC = os.environ.get("KAFKA_TOPIC", "crypto_trades")
 SYMBOLS = os.environ.get("SYMBOLS", "BTCUSDT,ETHUSDT,SOLUSDT").split(",")
 
 BINANCE_WS_URL = (
-    "wss://stream.binance.com:9443/stream?streams="
+    "wss://stream.binance.us:9443/stream?streams="
     + "/".join(f"{s.lower()}@trade" for s in SYMBOLS)
 )
 
