@@ -200,6 +200,12 @@ Same parsed stream, windowed by 1 minute on `trade_time` with a 2-minute waterma
 
 Single-broker setup with 3 partitions on `crypto_trades` — one per symbol. KRaft mode eliminates the Zookeeper dependency.
 
+### Spark Streaming UI
+
+The Structured Streaming tab at **http://localhost:4040** shows both live queries with batch counts, processing rates, and watermark progress.
+
+![Spark Streaming UI](docs/spark-streaming-ui.png)
+
 ---
 
 ## Lessons Learned
@@ -217,6 +223,9 @@ Bitnami migrated their images off Docker Hub. Switched to the official `apache/k
 
 **`spark-submit` not found in `docker compose exec`**
 The `apache/spark` image doesn't add `/opt/spark/bin` to `$PATH` for exec sessions. Fixed by using the full path `/opt/spark/bin/spark-submit` in the Makefile.
+
+**Spark driver UI inaccessible from host**
+Clicking an application link in the Spark master UI (port 8083) redirects to the driver UI on the container's internal Docker IP, which the host browser can't reach. Fixed by mapping port 4040 from spark-master to the host in `docker-compose.yaml`. The Structured Streaming tab at http://localhost:4040 then shows live query statistics.
 
 ---
 

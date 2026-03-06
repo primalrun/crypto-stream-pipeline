@@ -70,6 +70,7 @@ services:
     ports:
       - "8083:8080"   # Spark web UI (8080/8081/8082 taken by TLC stack)
       - "7078:7077"   # Spark master external port (7077 taken by TLC Spark)
+      - "4040:4040"   # Spark driver UI (streaming queries, DAGs)
     environment:
       SPARK_MASTER_HOST: spark-master
       SPARK_NO_DAEMONIZE: "true"
