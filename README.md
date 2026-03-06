@@ -192,6 +192,24 @@ Single-broker setup with 3 partitions on `crypto_trades` — one per symbol. KRa
 
 ---
 
+## Lessons Learned
+
+Issues encountered during implementation and how they were resolved.
+
+**`bitnami/kafka` removed from Docker Hub**
+Bitnami migrated their images off Docker Hub. Switched to the official `apache/kafka:3.7.0` image. Configuration env vars use `KAFKA_*` prefix (not `KAFKA_CFG_*`) and scripts live at `/opt/kafka/bin/` instead of being on `$PATH`.
+
+**Binance.com geo-blocked in the US (HTTP 451)**
+`stream.binance.com` returns HTTP 451 ("Service unavailable from a restricted location") from US IPs. Switched the WebSocket URL to `stream.binance.us:9443`, which is the Binance US endpoint and accessible without restriction.
+
+**Snowflake Spark connector JAR version doesn't exist**
+`spark-snowflake_2.12:2.15.0-spark_3.5` returns 404 on Maven Central — the connector dropped the `-spark_3.x` version suffix starting at v3.0. The correct artifacts are `spark-snowflake_2.12:3.1.7` and `snowflake-jdbc:3.28.0`.
+
+**`spark-submit` not found in `docker compose exec`**
+The `apache/spark` image doesn't add `/opt/spark/bin` to `$PATH` for exec sessions. Fixed by using the full path `/opt/spark/bin/spark-submit` in the Makefile.
+
+---
+
 ## Project Structure
 
 ```
