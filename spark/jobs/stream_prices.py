@@ -6,7 +6,7 @@ Runs two concurrent streaming queries:
   2. 1-min OHLCV  — trigger every 60s  → CRYPTO.RAW.prices_1min
 
 Start via:
-    spark-submit --master spark://spark-master:7077 --deploy-mode client \
+    /opt/spark/bin/spark-submit --master spark://spark-master:7077 --deploy-mode client \
         /opt/spark-jobs/stream_prices.py
 """
 
