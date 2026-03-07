@@ -137,3 +137,13 @@ Binance's WebSocket can send other message types besides trades — things like 
 If `"e"` is anything other than `"trade"`, the function returns immediately without publishing anything to Kafka. This prevents malformed or irrelevant messages from making it into the pipeline.
 
 `trade.get("e")` is used instead of `trade["e"]` as a safety measure — if the `"e"` field is missing entirely (e.g. a malformed message), `.get()` returns `None` rather than raising a `KeyError`, so the check still works and the message is skipped.
+
+---
+
+## producer.poll(0)
+
+`producer.produce()` doesn't send the message immediately — it places it in an internal buffer and sends it asynchronously in the background. `producer.poll(0)` tells the producer to process any pending events (delivery confirmations, errors) without blocking (`0` means don't wait).
+
+Without `poll()`, the internal buffer can fill up and `produce()` will eventually raise a `BufferError`. Calling `poll(0)` after every message keeps the buffer drained and allows the producer to handle delivery callbacks promptly.
+
+The `0` timeout means "check right now but don't wait" — it's non-blocking so it doesn't slow down the WebSocket message loop.
