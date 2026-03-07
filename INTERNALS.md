@@ -122,3 +122,18 @@ We use `outputMode("append")` on the OHLCV query because:
 `update` mode would write a window to Snowflake every time it receives new trades, so the same window would be written multiple times with changing values as more trades arrive — problematic for an append-only table.
 
 The raw trades query (Query 1) doesn't use `outputMode` explicitly — `foreachBatch` without aggregation defaults to append, and since each trade row is immutable there's nothing to update anyway.
+
+---
+
+## on_message Guard Clause
+
+```python
+if trade.get("e") != "trade":
+    return
+```
+
+Binance's WebSocket can send other message types besides trades — things like connection confirmations, heartbeats, or subscription acknowledgements. All of them have an `"e"` field indicating the event type. For a trade event it's `"trade"`.
+
+If `"e"` is anything other than `"trade"`, the function returns immediately without publishing anything to Kafka. This prevents malformed or irrelevant messages from making it into the pipeline.
+
+`trade.get("e")` is used instead of `trade["e"]` as a safety measure — if the `"e"` field is missing entirely (e.g. a malformed message), `.get()` returns `None` rather than raising a `KeyError`, so the check still works and the message is skipped.
