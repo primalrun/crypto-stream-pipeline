@@ -168,3 +168,19 @@ It does this in two `.select()` passes:
 - Casts `kafka_ts` to a timestamp and renames it `kafka_timestamp`
 
 The reason for two selects rather than one is that `from_json` produces a nested struct — you can't reference `d.symbol` in the same `select` that creates `d`. The second select flattens it.
+
+---
+
+## awaitAnyTermination
+
+`spark.streams.awaitAnyTermination()` blocks the main Python thread and keeps the job running until one of the streaming queries stops.
+
+Without it, `main()` would return immediately after starting the two queries — the queries run in background threads, but the main thread would exit, which would shut down the entire Spark application and kill both queries with it.
+
+In practice:
+
+- **Normal operation** — the main thread sits here indefinitely while the two queries process batches in the background
+- **`Ctrl+C`** — raises a keyboard interrupt, which exits the main thread and shuts everything down cleanly
+- **Query failure** — if either query crashes with an unhandled exception, `awaitAnyTermination()` unblocks and the job exits with an error
+
+The "Any" in the name means it only takes one query terminating to unblock — it doesn't wait for both.
