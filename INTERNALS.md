@@ -147,3 +147,24 @@ If `"e"` is anything other than `"trade"`, the function returns immediately with
 Without `poll()`, the internal buffer can fill up and `produce()` will eventually raise a `BufferError`. Calling `poll(0)` after every message keeps the buffer drained and allows the producer to handle delivery callbacks promptly.
 
 The `0` timeout means "check right now but don't wait" — it's non-blocking so it doesn't slow down the WebSocket message loop.
+
+---
+
+## parse_kafka
+
+`parsed = parse_kafka(raw)` transforms the raw Kafka stream into structured, typed columns — but doesn't execute anything yet. Spark uses lazy evaluation, so this just builds a query plan.
+
+It does this in two `.select()` passes:
+
+**First select — parse the JSON**
+- `F.col("value").cast("string")` — converts the raw Kafka bytes to a string
+- `F.from_json(..., TRADE_SCHEMA)` — parses that string into a struct using `TRADE_SCHEMA`
+- `.alias("d")` — names the struct `d` so its fields can be accessed as `d.symbol`, `d.price`, etc.
+- `F.col("timestamp").alias("kafka_ts")` — grabs Kafka's own message timestamp alongside
+
+**Second select — flatten and derive columns**
+- Pulls each field out of the `d` struct into its own top-level column
+- Derives `trade_time` by dividing `timestamp_ms` by 1000 and casting to timestamp — Spark's `window()` function needs a proper timestamp, not raw milliseconds
+- Casts `kafka_ts` to a timestamp and renames it `kafka_timestamp`
+
+The reason for two selects rather than one is that `from_json` produces a nested struct — you can't reference `d.symbol` in the same `select` that creates `d`. The second select flattens it.
