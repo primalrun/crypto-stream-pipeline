@@ -243,9 +243,14 @@ crypto-stream-pipeline/
 │   ├── snowflake.tf         # DB, schema, warehouse, role, grants
 │   ├── outputs.tf
 │   └── terraform.tfvars.example
+├── docs/
+│   ├── snowflake-raw-trades.png
+│   ├── snowflake-raw-prices_1min.png
+│   └── spark-streaming-ui.png
 ├── Dockerfile.spark         # apache/spark:3.5.3 + Kafka JARs + Snowflake JARs
 ├── docker-compose.yaml
 ├── .env.example
 ├── Makefile
+├── INTERNALS.md
 └── README.md
 ```
